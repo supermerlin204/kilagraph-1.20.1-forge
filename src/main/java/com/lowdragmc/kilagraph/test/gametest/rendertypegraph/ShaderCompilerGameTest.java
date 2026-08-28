@@ -521,7 +521,7 @@ public final class ShaderCompilerGameTest {
         assertTrue(helper, "gl_Position transforms the displaced position",
                 vsh.contains("gl_Position = ProjMat * ModelViewMat * vec4(kg_vertexPos, 1.0);"));
         assertTrue(helper, "fog distance follows the displaced position",
-                vsh.contains("fog_distance(kg_vertexPos, 0)"));
+                vsh.contains("fog_distance(ModelViewMat, kg_vertexPos, 0)"));
         assertTrue(helper, "vsh hoists the displaced normal", vsh.contains("vec3 kg_vertexNormal = "));
         assertTrue(helper, "default lighting re-lights with the displaced normal",
                 vsh.contains("minecraft_mix_light(Light0_Direction, Light1_Direction, kg_vertexNormal"));
@@ -1881,7 +1881,7 @@ public final class ShaderCompilerGameTest {
         CompiledShaderGraph okCompiled = compile(okGraph);
         assertFalse(helper, "fog distance feeding a vsh block is legal", okCompiled.hasStageErrors());
         assertTrue(helper, "vsh computes a fog distance of the model position",
-                okCompiled.vertexSource().contains("fog_distance((Position + ModelOffset), 0)"));
+                okCompiled.vertexSource().contains("fog_distance(ModelViewMat, (Position + ModelOffset), 0)"));
         helper.succeed();
     }
 
@@ -1905,7 +1905,7 @@ public final class ShaderCompilerGameTest {
         }
         assertTrue(helper, "fsh reads the spherical distance varying", fsh.contains("in float sphericalVertexDistance;"));
         assertTrue(helper, "vsh writes the spherical distance default (of the model position)",
-                compiled.vertexSource().contains("fog_distance((Position + ModelOffset), 0)"));
+                compiled.vertexSource().contains("fog_distance(ModelViewMat, (Position + ModelOffset), 0)"));
 
         // TotalFogValue: same field/varying defaults (float output → alpha).
         RenderTypeGraph tot = new RenderTypeGraph();

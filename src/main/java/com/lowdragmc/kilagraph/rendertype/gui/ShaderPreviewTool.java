@@ -203,10 +203,10 @@ public class ShaderPreviewTool extends UIElement implements IGraphTool {
     /** Recompile + rebuild the material when the graph changed; null if it can't be rendered. */
     @Nullable
     private RenderTypeGraphMaterial updateMaterial(RenderTypeGraph graph) {
-        // Skip the per-frame recompile while the graph hasn't changed (the change-version bumps on any structural
-        // or value/option edit). Still recompile when we have no material yet (e.g. after a failure) to keep retrying.
+        // Skip recompiling while the graph has not changed, including after a deterministic GL compile failure.
+        // A structural, value or option edit bumps the version and permits the next attempt.
         long version = graph.getChangeVersion();
-        if (material != null && version == lastChangeVersion) return material;
+        if (version == lastChangeVersion && (material != null || lastCompileFailed)) return material;
 
         CompiledShaderGraph compiled;
         try {
@@ -214,6 +214,7 @@ public class ShaderPreviewTool extends UIElement implements IGraphTool {
             // the cube instead of the panel's screen sub-rect. In-world materials still use true screen-space.
             compiled = graph.createCompiler().editorPreview().compile();
         } catch (RuntimeException e) {
+            lastChangeVersion = version;
             if (!lastCompileFailed) {
                 LOGGER.warn("[KilaGraph] preview graph failed to compile: {}", e.getMessage());
                 lastCompileFailed = true;
@@ -233,12 +234,14 @@ public class ShaderPreviewTool extends UIElement implements IGraphTool {
         // invalid GLSL; keep the last good material rather than crashing the draw.
         RenderTypeGraphMaterial rebuilt = RenderTypeFactory.createMaterial(compiled);
         if (rebuilt == null) {
+            lastCompileFailed = true;
             // GLSL compile failures happen at the GL layer (not graph validation), so they never reach the
             // GraphLogger — surface a generic message here (the detailed driver error is logged). Don't clobber a
             // stage-error message already shown above.
             if (!compiled.hasStageErrors()) showCompileError();
             return material;
         }
+        lastCompileFailed = false;
         if (material != null) material.close();
         material = rebuilt;
         return material;

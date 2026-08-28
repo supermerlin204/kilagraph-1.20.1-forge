@@ -485,14 +485,16 @@ public class ShaderGraphCompiler {
 
     /**
      * The interpolated {@code sphericalVertexDistance} varying — vanilla's spherical fog distance of the
-     * model position. The vsh default ({@code fog_spherical_distance((Position + ModelOffset))}) is only used
+     * model position. The vsh default ({@code fog_distance(ModelViewMat, position, 0)}) is only used
      * if no varying block already wrote {@code sphericalVertexDistance} (first-writer-wins).
      */
     protected ShaderExpr sphericalVertexDistance() {
         return varyingInput("sphericalVertexDistance", GlslType.FLOAT,
                 () -> {
                     addInclude("minecraft:fog.glsl");
-                    return new ShaderExpr("fog_distance(" + modelPosition().code() + ", 0)", GlslType.FLOAT);
+                    useBuiltinUniform("ModelViewMat", GlslType.MAT4);
+                    return new ShaderExpr("fog_distance(ModelViewMat, " + modelPosition().code() + ", 0)",
+                            GlslType.FLOAT);
                 },
                 new ShaderExpr("0.0", GlslType.FLOAT));
     }
@@ -503,7 +505,9 @@ public class ShaderGraphCompiler {
         return varyingInput("cylindricalVertexDistance", GlslType.FLOAT,
                 () -> {
                     addInclude("minecraft:fog.glsl");
-                    return new ShaderExpr("fog_distance(" + modelPosition().code() + ", 1)", GlslType.FLOAT);
+                    useBuiltinUniform("ModelViewMat", GlslType.MAT4);
+                    return new ShaderExpr("fog_distance(ModelViewMat, " + modelPosition().code() + ", 1)",
+                            GlslType.FLOAT);
                 },
                 new ShaderExpr("0.0", GlslType.FLOAT));
     }

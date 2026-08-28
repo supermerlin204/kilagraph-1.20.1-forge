@@ -28,10 +28,13 @@ import com.lowdragmc.kilagraph.blueprint.nodes.math.LerpNode;
 import com.lowdragmc.kilagraph.blueprint.nodes.math.MultiplyNode;
 import com.lowdragmc.kilagraph.blueprint.nodes.math.SqrtNode;
 import com.lowdragmc.kilagraph.blueprint.nodes.math.SubtractNode;
+import com.lowdragmc.kilagraph.graph.exec.EvaluationEnvironment;
 import com.lowdragmc.kilagraph.graph.exec.GraphExecutor;
 import com.lowdragmc.kilagraph.graph.exec.Intrinsics;
+import com.lowdragmc.kilagraph.graph.exec.VariableStore;
 import com.lowdragmc.kilagraph.test.gametest.KGGraphBuilder;
 import com.lowdragmc.kilagraph.test.gametest.KGGraphFixtures;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.variable.VariableKind;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.ICustomNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import net.minecraft.gametest.framework.GameTest;
@@ -42,6 +45,7 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -252,6 +256,65 @@ public final class IntrinsicParityGameTest {
                         + spec.inputs().get(skipped) + "', others=" + v + "]: intrinsic gave "
                         + render(a) + ", node gave " + render(c);
             }
+        }
+        return null;
+    }
+
+    /** Inputs fed by wires carrying whole numbers exercise the integer promotion lane. */
+    @GameTest(template = "empty", timeoutTicks = 2000)
+    @PrefixGameTestTemplate(false)
+    public static void intrinsicsMatchTheirNodesOnWholeNumberWires(GameTestHelper helper) {
+        for (Spec spec : specs()) {
+            if (spec.logical()) continue;
+            String failure = checkWhole(spec);
+            if (failure != null) {
+                helper.fail(failure);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    private static String checkWhole(Spec spec) {
+        // These adjacent values are identical as floats, so they expose accidental float coercion.
+        long[] values = spec.inputs().size() > 3
+                ? new long[]{0L, 16_777_216L, 16_777_217L}
+                : new long[]{0L, 1L, -1L, 7L, 16_777_216L, 16_777_217L,
+                             Long.MIN_VALUE, Long.MAX_VALUE};
+
+        var b = KGGraphBuilder.blueprint();
+        b.add("node", spec.nodeClass());
+        for (String id : spec.inputs()) {
+            b.variable("v_" + id, long.class, 0L, VariableKind.INPUT);
+            b.wire("node." + id, "v_" + id);
+        }
+
+        var store = new VariableStore();
+        var env = new EvaluationEnvironment(store, OptionalLong.empty());
+        var on = new GraphExecutor(b.graph(), env);
+        var off = new GraphExecutor(b.graph(), env);
+        on.setGraphFrozen(true);
+        off.setGraphFrozen(true);
+        off.setOptimisationEnabled(GraphExecutor.Opt.INTRINSICS, false);
+        var out = b.outputOf("node.out");
+
+        int n = spec.inputs().size();
+        int[] at = new int[n];
+        while (true) {
+            for (int i = 0; i < n; i++) store.put("v_" + spec.inputs().get(i), values[at[i]]);
+            on.clearCache();
+            off.clearCache();
+            Object a = on.evaluate(out, Object.class);
+            Object c = off.evaluate(out, Object.class);
+            if (!identical(a, c)) {
+                List<String> combo = new ArrayList<>(n);
+                for (int i = 0; i < n; i++) combo.add(spec.inputs().get(i) + "=" + values[at[i]] + "L");
+                return spec.nodeClass().getSimpleName() + " [whole] " + combo
+                        + ": intrinsic gave " + render(a) + ", node gave " + render(c);
+            }
+            int i = n - 1;
+            while (i >= 0 && ++at[i] == values.length) at[i--] = 0;
+            if (i < 0) break;
         }
         return null;
     }

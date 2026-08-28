@@ -93,7 +93,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
     // Keep LDLib2 external at distribution time, but deobfuscate the supplied Forge mod JAR for development.
-    implementation fg.deobf('local:ldlib2-forge-1.20.1:2.2.27+forge.1.20.1:all')
+    implementation fg.deobf('local:ldlib2-forge-1.20.1:2.2.37+forge.1.20.1:all')
     implementation fg.deobf('thedarkcolour:kotlinforforge:4.11.0')
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

@@ -1,6 +1,5 @@
 package com.lowdragmc.kilagraph.graph.util;
 
-import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,10 +14,6 @@ import java.util.List;
  * (the value list behind a dropdown option).</p>
  */
 public interface INodeDescription {
-
-    /** KilaGraph-owned description hook, retained for LDLib2 versions that do not declare it on Node. */
-    @Nullable
-    UIElement createDescriptionUI();
 
     /**
      * Source code this node stands for, shown as a syntax-highlighted card. Keep lines short (~48 chars);

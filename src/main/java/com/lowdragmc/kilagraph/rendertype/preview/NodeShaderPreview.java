@@ -139,7 +139,7 @@ public class NodeShaderPreview extends UIElement {
 
     private RenderTypeGraphMaterial updateMaterial() {
         long version = graph.getChangeVersion();
-        if (material != null && version == lastChangeVersion) return material;
+        if (version == lastChangeVersion && (material != null || lastCompileFailed)) return material;
 
         String id = previewPortId.get();
         PortModel outputPort = id == null ? null : nodeModel.getOutputsById().get(id);
@@ -149,6 +149,7 @@ public class NodeShaderPreview extends UIElement {
         try {
             compiled = graph.createCompiler().compilePreview(outputPort);
         } catch (RuntimeException e) {
+            lastChangeVersion = version;
             if (!lastCompileFailed) {
                 LOGGER.warn("[KilaGraph] node preview failed to compile: {}", e.getMessage());
                 lastCompileFailed = true;
@@ -162,7 +163,10 @@ public class NodeShaderPreview extends UIElement {
             return material;
         }
         RenderTypeGraphMaterial rebuilt = RenderTypeFactory.createMaterial(compiled);
-        if (rebuilt == null) return material;
+        if (rebuilt == null) {
+            lastCompileFailed = true;
+            return material;
+        }
         if (material != null) material.close();
         material = rebuilt;
         return material;

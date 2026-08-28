@@ -467,9 +467,18 @@ public final class RenderTypeGraphGameTest {
         graph.setSettings(settings);
 
         var tag = RenderTypeGraphResource.INSTANCE.serializeGraph(graph);
+        assertTrue(helper, "resource uses the upstream graph/settings wrapper",
+                tag.get("graph") instanceof CompoundTag && tag.get("settings") instanceof CompoundTag);
         RenderTypeGraph restored = RenderTypeGraphResource.INSTANCE.deserializeGraph(tag);
 
         assertTrue(helper, "resource round-trips rendertype settings", restored.getSettings().equals(settings));
+
+        // The earlier 1.20.1 port stored graph NBT directly, with settings in
+        // _additional.kilagraphSettings. Keep that format loadable after restoring the wrapper.
+        CompoundTag legacyTag = graph.graphModel.serializeNBT(Platform.getFrozenRegistry());
+        RenderTypeGraph legacyRestored = RenderTypeGraphResource.INSTANCE.deserializeGraph(legacyTag);
+        assertTrue(helper, "resource still loads the legacy direct graph tag",
+                legacyRestored.getSettings().equals(settings));
         helper.succeed();
     }
 

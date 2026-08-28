@@ -43,13 +43,17 @@ KilaGraph builds on LDLib2's Node Graph Toolkit to provide in-game programmable 
 
 - Minecraft `1.20.1`
 - Forge `47.4.23`
-- LDLib2 `2.2.27+forge.1.20.1`
+- LDLib2 `2.2.37+forge.1.20.1`
 - Kotlin for Forge `4.11.0+` (required by LDLib2)
 
 Exact dependency ranges are defined in `gradle.properties`.
 
+This port currently tracks the upstream [`1.21` branch](https://github.com/Low-Drag-MC/KilaGraph/tree/1.21)
+through `v21.1.0.12` (`e260c33`), adapted as port version `20.1.0.12`.
+
 ## Links
 
+- [Unofficial Forge port repository](https://github.com/supermerlin204/kilagraph-1.20.1-forge)
 - [LDLib2](https://github.com/Low-Drag-MC/LDLib2)
 - [Original KilaGraph repository / 原项目仓库](https://github.com/Low-Drag-MC/KilaGraph)
 

@@ -1,7 +1,9 @@
 package com.lowdragmc.kilagraph.editor;
 
 import com.lowdragmc.kilagraph.rendertype.RenderTypeGraph;
+import com.lowdragmc.kilagraph.rendertype.gui.RenderTypeGraphEditorView;
 import com.lowdragmc.lowdraglib2.editor.resource.IResourceProvider;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphResourceProviderContainer;
 import net.minecraft.nbt.CompoundTag;
 
@@ -20,4 +22,8 @@ public class RenderTypeGraphResourceProviderContainer extends GraphResourceProvi
         super(graphResource, provider);
     }
 
+    @Override
+    protected GraphEditorView createEditorView() {
+        return new RenderTypeGraphEditorView(getGraphViewFactory());
+    }
 }

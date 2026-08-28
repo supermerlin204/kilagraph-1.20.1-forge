@@ -12,9 +12,7 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphResource;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.IGraphReferenceResolver;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView;
 import java.util.function.Supplier;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
 public class RenderTypeGraphResource extends GraphResource<RenderTypeGraph> {
@@ -32,10 +30,12 @@ public class RenderTypeGraphResource extends GraphResource<RenderTypeGraph> {
 
     /** The stored form is the wrapped {@code {graph, settings}} tag — every consumer (editor
      *  container, cross-library resolvers, runtimes) goes through this pair. */
+    @Override
     public CompoundTag serializeGraphResource(RenderTypeGraph graph) {
         return serializeGraph(graph);
     }
 
+    @Override
     public RenderTypeGraph deserializeGraphResource(CompoundTag tag,
             @Nullable IGraphReferenceResolver resolver) {
         return deserializeGraph(tag, resolver);
@@ -47,10 +47,11 @@ public class RenderTypeGraphResource extends GraphResource<RenderTypeGraph> {
     }
 
     public CompoundTag serializeGraph(RenderTypeGraph graph) {
-        // Settings are stored in RenderTypeGraphModel's native _additional payload on LDLib2 1.20.1.
-        // 1.20.1: MC has no TagValueInput/Output (added in 1.21.5); LDLib2-1.21's graph model serializes
-        // directly to NBT via serializeNBT(HolderLookup.Provider) — the canonical GraphView/undo pattern.
-        return graph.graphModel.serializeNBT(Platform.getFrozenRegistry());
+        var root = new CompoundTag();
+        // 1.20.1 has no TagValueInput/Output, so the graph model still serializes directly to NBT.
+        root.put(GRAPH_TAG, graph.graphModel.serializeNBT(Platform.getFrozenRegistry()));
+        root.put(SETTINGS_TAG, RenderTypeGraphModel.serializeSettings(graph.getSettings()));
+        return root;
     }
 
     public RenderTypeGraph deserializeGraph(CompoundTag tag) {
@@ -80,23 +81,6 @@ public class RenderTypeGraphResource extends GraphResource<RenderTypeGraph> {
         }
         graph.restoreFixedStagesAfterDeserialize();
         return graph;
-    }
-
-    /** Convert resources saved by the 1.21 editor's {graph, settings} wrapper to 1.20.1's native tag. */
-    @Override
-    public CompoundTag deserializeResource(Tag tag, HolderLookup.Provider provider) {
-        CompoundTag root = super.deserializeResource(tag, provider);
-        if (!(root.get(GRAPH_TAG) instanceof CompoundTag wrappedGraph)) return root;
-
-        CompoundTag graphTag = wrappedGraph.copy();
-        if (root.get(SETTINGS_TAG) instanceof CompoundTag settingsTag) {
-            CompoundTag additional = graphTag.get("_additional") instanceof CompoundTag existing
-                    ? existing.copy()
-                    : new CompoundTag();
-            additional.put(RenderTypeGraphModel.SETTINGS_NBT_KEY, settingsTag.copy());
-            graphTag.put("_additional", additional);
-        }
-        return graphTag;
     }
 
     @Override
