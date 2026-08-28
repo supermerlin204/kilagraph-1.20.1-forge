@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.lowdragmc.kilagraph.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "kilagraph.refmap.json",
+  "client": [
+    "ShaderInstanceMixin"
+  ],
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

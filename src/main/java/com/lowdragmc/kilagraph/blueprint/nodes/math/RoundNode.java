@@ -1,0 +1,42 @@
+package com.lowdragmc.kilagraph.blueprint.nodes.math;
+
+import com.lowdragmc.kilagraph.blueprint.BlueprintGraph;
+import com.lowdragmc.kilagraph.graph.core.AnnotatedNode;
+import com.lowdragmc.kilagraph.graph.core.InputPort;
+import com.lowdragmc.kilagraph.graph.core.Option;
+import com.lowdragmc.kilagraph.graph.core.OutputPort;
+import com.lowdragmc.kilagraph.graph.exec.EvalContext;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.NodeAttribute;
+
+import java.util.List;
+
+/**
+ * Rounding picker. Enum {@link Op} → {@code EnumAccessor} dropdown.
+ */
+@NodeAttribute(name = "math_round", group = "math", graphTypes = BlueprintGraph.class)
+public class RoundNode extends AnnotatedNode {
+
+    public enum Op { ROUND, FLOOR, CEIL, TRUNC }
+
+    @Option public Op op = Op.ROUND;
+    @InputPort public float in = 0f;
+    @OutputPort public float out;
+
+    @Override
+    public void evaluate(EvalContext ctx) {
+        float v = ctx.getFloat("in", 0f);
+        Op o = ctx.getOption("op", Op.class, Op.ROUND);
+        float r = switch (o) {
+            case FLOOR -> (float) Math.floor(v);
+            case CEIL -> (float) Math.ceil(v);
+            case TRUNC -> (float) (long) v;
+            default -> Math.round(v);
+        };
+        ctx.setOutput("out", r);
+    }
+
+    @Override
+    public List<String> optionChoices(String optionId) {
+        return "op".equals(optionId) ? List.of("ROUND", "FLOOR", "CEIL", "TRUNC") : List.of();
+    }
+}

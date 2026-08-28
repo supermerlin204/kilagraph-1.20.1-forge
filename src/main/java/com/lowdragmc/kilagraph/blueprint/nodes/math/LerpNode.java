@@ -1,0 +1,24 @@
+package com.lowdragmc.kilagraph.blueprint.nodes.math;
+
+import com.lowdragmc.kilagraph.blueprint.BlueprintGraph;
+import com.lowdragmc.kilagraph.graph.core.AnnotatedNode;
+import com.lowdragmc.kilagraph.graph.core.InputPort;
+import com.lowdragmc.kilagraph.graph.core.OutputPort;
+import com.lowdragmc.kilagraph.graph.exec.EvalContext;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.NodeAttribute;
+
+@NodeAttribute(name = "math_lerp", group = "math", graphTypes = BlueprintGraph.class)
+public class LerpNode extends AnnotatedNode {
+    @InputPort public float a = 0f;
+    @InputPort public float b = 1f;
+    @InputPort public float t = 0f;
+    @OutputPort public float out;
+
+    @Override
+    public void evaluate(EvalContext ctx) {
+        float va = ctx.getFloat("a", 0f);
+        float vb = ctx.getFloat("b", 1f);
+        float vt = ctx.getFloat("t", 0f);
+        ctx.setOutput("out", va + (vb - va) * vt);
+    }
+}
